@@ -5,13 +5,14 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Notifications\Notification;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -24,6 +25,9 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'role_id',
+        'department_id',
+        'position_id',
     ];
 
     /**
@@ -45,8 +49,36 @@ class User extends Authenticatable implements FilamentUser
         'email_verified_at' => 'datetime',
     ];
 
-    public function canAccessPanel(Panel $panel): bool
+    
+
+    public function createdTasks()
     {
-        return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
+        return $this->hasMany(Task::class, 'created_by');
     }
+
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function positions()
+    {
+        return $this->belongsTo(Position::class);
+    }
+
+    // public function canAccessPanel(Panel $panel): bool
+    // {
+    //     return $this->role?->name === 'Admin';
+    // }
+
 }

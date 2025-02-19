@@ -7,12 +7,16 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function home(Request $request):RedirectResponse
-    {
-        if ($request->session()->exists("user")) {
+    public function home(Request $request): RedirectResponse
+{
+    if ($request->session()->exists("user")) {
+        $user = \App\Models\User::find($request->session()->get("user"));
+        
+        if ($user && $user->canAccessPanel(app(\Filament\Panel::class))) {
             return redirect("/admin");
-        } else {
-            return redirect("/admin/login");
         }
     }
+
+    return redirect("/admin/login");
+}
 }
