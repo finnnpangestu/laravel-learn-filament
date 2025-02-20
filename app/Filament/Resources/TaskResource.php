@@ -4,13 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TaskResource\Pages;
 use App\Filament\Resources\TaskResource\RelationManagers;
-use App\Models\Department;
 use App\Models\Task;
-use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -21,36 +21,29 @@ class TaskResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function query(): Builder
-    {
-        $user = auth()->user();
-        if ($user->role->level <= 1) {
-            return parent::query();
-        } elseif ($user->role->level == 2) {
-            return parent::query()->where('department_id', $user->department_id);
-        } else {
-            return parent::query()->where('assigned_to', $user->id);
-        }
-    }
-
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('title')->required(),
-                Forms\Components\Textarea::make('description')->required(),
+                Forms\Components\TextInput::make('title')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Textarea::make('description')
+                    ->required(),
                 Forms\Components\Select::make('department_id')
-                    ->label('Department')
-                    ->options(Department::all()->pluck('name', 'id'))
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 Forms\Components\Select::make('created_by')
-                    ->label('Created By')
-                    ->options(User::all()->pluck('name', 'id'))
-                    ->default(auth()->id()) // Default ke user yang login
+                    ->relationship('creator', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 Forms\Components\Select::make('assigned_to')
-                    ->label('Assigned To')
-                    ->options(User::where('role_id', 3)->where('department_id', auth()->user()->department_id)->pluck('name', 'id'))
+                    ->relationship('assignee', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
             ]);
     }
@@ -59,14 +52,23 @@ class TaskResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('description')->limit(50),
-                Tables\Columns\TextColumn::make('department.name')->label('Department'),
-                Tables\Columns\TextColumn::make('creator.name')->label('Created By'),
-                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To'),
+                Tables\Columns\TextColumn::make('title')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->limit(50),
+                Tables\Columns\TextColumn::make('department.name')
+                    ->label('Department')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('assignee.name')
+                    ->label('Assigned To')
+                    ->sortable(),
             ])
             ->filters([
-                //
+                
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

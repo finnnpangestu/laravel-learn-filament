@@ -56,10 +56,10 @@ class User extends Authenticatable
         return $this->hasMany(Task::class, 'created_by');
     }
 
-    public function assignedTasks()
-    {
-        return $this->hasMany(Task::class, 'assigned_to');
-    }
+    // public function assignedTasks()
+    // {
+    //     return $this->hasMany(Task::class, 'assigned_to');
+    // }
 
     public function role()
     {
@@ -74,6 +74,12 @@ class User extends Authenticatable
     public function positions()
     {
         return $this->belongsTo(Position::class);
+    }
+
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_user')
+            ->withTimestamps();
     }
 
     // public function canAccessPanel(Panel $panel): bool
